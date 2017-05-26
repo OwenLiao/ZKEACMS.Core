@@ -69,7 +69,7 @@ namespace ZKEACMS.Controllers
             var page = new PageEntity
             {
                 ParentId = ParentID,
-                DisplayOrder = Service.Count(m => m.ParentId == ParentID) + 1,
+                DisplayOrder = Service.Count(m => m.ParentId == ParentID && !m.IsPublishedPage) + 1,
                 Url = "~/"
             };
             var parentPage = Service.Get(ParentID);
@@ -199,7 +199,7 @@ namespace ZKEACMS.Controllers
                 PageID = context.PageID,
                 LayoutID = layout.ID,
                 Zones = _zoneService.GetZonesByPageId(context.PageID),
-                Widgets = _widgetService.GetAllByPageId(HttpContext.RequestServices, context.PageID),
+                Widgets = _widgetService.GetAllByPage(Service.Get(context.PageID)),
                 LayoutHtml = layout.Html
             };
             return View(viewModel);

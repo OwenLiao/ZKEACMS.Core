@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Easy.LINQ;
 using Easy.ViewPort.Descriptor;
+using Easy.Models;
 
 namespace Easy.Mvc.TagHelpers
 {
@@ -20,15 +21,19 @@ namespace Easy.Mvc.TagHelpers
         private const string DefaultClass = "dataTable table table-striped table-bordered";
         private const string DefaultSourceAction = "GetList";
         public const string DefaultEditAction = "Edit";
+        public const string DefaultDeleteAction = "Delete";
         private const string TableStructure = "<table class=\"{0}\" cellspacing=\"0\" width=\"100%\" data-source=\"{1}\"><thead><tr>{2}</tr></thead><tfoot><tr class=\"search\">{3}</tr></tfoot></table>";
         private const string TableHeadStructure = "<th data-key=\"{0}\" data-template=\"{1}\" data-order=\"{2}\" data-option=\"{4}\" data-search-operator=\"{5}\" data-data-type=\"{6}\" data-format=\"{7}\">{3}</th>";
         private const string TableSearchStructure = "<th></th>";
         public const string EditLinkTemplate = "<a href=\"{0}\" class=\"glyphicon glyphicon-pencil\"></a>";
+        public const string DeleteLinkTemplate = "<a href=\"{0}\" class=\"glyphicon glyphicon-remove\"></a>";
 
         public string Source { get; set; }
         public string Edit { get; set; }
+        public string Delete { get; set; }
         public string GridClass { get; set; }
         public bool? EditAble { get; set; }
+        public bool? DeleteAble { get; set; }
         public string OrderAsc { get; set; }
         public string OrderDesc { get; set; }
 
@@ -47,6 +52,10 @@ namespace Easy.Mvc.TagHelpers
             if (ModelType == null)
             {
                 ModelType = ViewContext.ViewData.ModelMetadata.ModelType;
+                if (OrderAsc.IsNullOrEmpty() && OrderDesc.IsNullOrEmpty() && typeof(EditorEntity).IsAssignableFrom(ModelType))
+                {
+                    OrderDesc = "LastUpdateDate";
+                }
             }
             var viewConfig = ViewConfigureAttribute.GetAttribute(ModelType);
             StringBuilder tableHeaderBuilder = new StringBuilder();
@@ -67,9 +76,18 @@ namespace Easy.Mvc.TagHelpers
                     {
                         Edit = Url.Action(DefaultEditAction) + "/{" + name + "}";
                     }
+                    if (Delete.IsNullOrWhiteSpace())
+                    {
+                        Delete = Url.Action(DefaultDeleteAction) + "/{" + name + "}";
+                    }
+                    string manager = EditLinkTemplate.FormatWith(Edit);
+                    if (DeleteAble ?? true)
+                    {
+                        manager += " " + DeleteLinkTemplate.FormatWith(Delete);
+                    }
                     tableHeaderBuilder.AppendFormat(TableHeadStructure,
                         string.Empty,
-                        WebUtility.HtmlEncode(EditLinkTemplate.FormatWith(Edit)),
+                        WebUtility.HtmlEncode(manager),
                         string.Empty,
                         "操作",
                         string.Empty,

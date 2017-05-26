@@ -1,7 +1,6 @@
-/* http://www.zkea.net/ Copyright 2016 ZKEASOFT http://www.zkea.net/licenses */
 /*!
  * http://www.zkea.net/
- * Copyright 2016 ZKEASOFT
+ * Copyright 2017 ZKEASOFT
  * http://www.zkea.net/licenses
  */
 
@@ -12,15 +11,18 @@ using Microsoft.AspNetCore.Mvc;
 using ZKEACMS.Article.ActionFilter;
 using ZKEACMS.Article.Models;
 using ZKEACMS.Article.Service;
+using Easy.Extend;
 
 namespace ZKEACMS.Article.Controllers
 {
     [DefaultAuthorize, ViewDataArticleType]
     public class ArticleController : BasicController<ArticleEntity, int, IArticleService>
     {
-        public ArticleController(IArticleService service)
+        private readonly IAuthorizer _authorizer;
+        public ArticleController(IArticleService service, IAuthorizer authorizer)
             : base(service)
         {
+            _authorizer = authorizer;
         }
         [DefaultAuthorize(Policy = PermissionKeys.ViewArticle)]
         public override ActionResult Index()
@@ -51,9 +53,13 @@ namespace ZKEACMS.Article.Controllers
         public override ActionResult Edit(ArticleEntity entity)
         {
             var result = base.Edit(entity);
-            if (entity.ActionType == ActionType.Publish)
+            if (entity.ActionType == ActionType.Publish && _authorizer.Authorize(PermissionKeys.PublishArticle))
             {
                 Service.Publish(entity.ID);
+                if (Request.Query["ReturnUrl"].Count > 0)
+                {
+                    return Redirect(Request.Query["ReturnUrl"]);
+                }
             }
             return result;
         }
@@ -63,9 +69,9 @@ namespace ZKEACMS.Article.Controllers
             return base.GetList(query);
         }
         [DefaultAuthorize(Policy = PermissionKeys.ManageArticle)]
-        public override JsonResult Delete(string ids)
+        public override JsonResult Delete(int id)
         {
-            return base.Delete(ids);
+            return base.Delete(id);
         }
     }
 }

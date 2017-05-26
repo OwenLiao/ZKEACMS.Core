@@ -3,6 +3,7 @@
  * http://www.zkea.net/licenses */
 
 using Easy;
+using Easy.Constant;
 using Easy.Extend;
 using Easy.MetaData;
 using System.Collections.Generic;
@@ -29,16 +30,13 @@ namespace ZKEACMS.Article.Models
         {
             base.ViewConfigure();
             var articleTypeService = ServiceLocator.GetService<IArticleTypeService>();
-            ViewConfig(m => m.ArticleTypeID).AsDropDownList().Order(NextOrder()).DataSource(() => articleTypeService.GetAll().ToDictionary(m => m.ID.ToString(), m => m.Title)).Required();
+            ViewConfig(m => m.ArticleTypeID).AsDropDownList().Order(NextOrder())
+                .DataSource(() => articleTypeService.GetAll().ToDictionary(m => m.ID.ToString(), m => m.Title))
+                .Required().AddClass("select").AddProperty("data-url", "/admin/ArticleType/Select");
+
             ViewConfig(m => m.DetailPageUrl).AsTextBox().Order(NextOrder()).AddClass("select").AddProperty("data-url", Urls.SelectPage);
 
-            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(() =>
-            {
-                Dictionary<string, string> templates = new Dictionary<string, string>();
-                templates.Add("Widget.ArticleList", "Ä¬ÈÏ");
-                templates.Add("Widget.ArticleList-Snippet", "ºá·ù");
-                return templates;
-            });
+            ViewConfig(m => m.PartialView).AsDropDownList().Order(NextOrder()).DataSource(SourceType.Dictionary);
         }
     }
 

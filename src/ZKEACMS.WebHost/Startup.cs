@@ -6,6 +6,7 @@
 
 using Easy;
 using Easy.Extend;
+using Easy.Logging;
 using Easy.Mvc.Attribute;
 using Easy.Mvc.Authorize;
 using Easy.Mvc.DataAnnotations;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -59,7 +61,6 @@ namespace ZKEACMS.WebHost
               {
                   option.ModelBinderProviders.Insert(0, new WidgetModelBinderProvider());
                   option.ModelMetadataDetailsProviders.Add(new DataAnnotationsMetadataProvider());
-                  option.Filters.Add(new HandleErrorToLogAttribute());
               })
              .AddControllersAsServices()
              .AddJsonOptions(option =>
@@ -67,6 +68,7 @@ namespace ZKEACMS.WebHost
                  option.SerializerSettings.DateFormatString = "yyyy-MM-dd";
              });
             services.TryAddTransient<IOnConfiguring, EntityFrameWorkConfigure>();
+
             services.UseEasyFrameWork(Configuration, HostingEnvironment).LoadEnablePlugins(plugin =>
              {
                  var cmsPlugin = plugin as PluginBase;
@@ -90,11 +92,9 @@ namespace ZKEACMS.WebHost
             services.AddAuthorization();
             new ResourceManager().Excute();
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            //ServiceLocator.Current = app.ApplicationServices;
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
             ServiceLocator.Current = app.ApplicationServices;
@@ -107,6 +107,7 @@ namespace ZKEACMS.WebHost
             }
             else
             {
+                loggerFactory.UseFileLog(env);
                 app.UseExceptionHandler("/Error");
             }
 
@@ -124,10 +125,6 @@ namespace ZKEACMS.WebHost
 
             app.UseMvc(routes =>
             {
-                //routes.MapRoute(
-                //    name: "default",
-                //    template: "{controller=Home}/{action=Index}/{id?}");
-
                 app.ApplicationServices.GetService<IRouteProvider>().GetRoutes().OrderByDescending(route => route.Priority).Each(route =>
                   {
                       routes.MapRoute(route.RouteName, route.Template, route.Defaults, route.Constraints, route.DataTokens);

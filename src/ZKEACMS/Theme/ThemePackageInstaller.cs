@@ -10,7 +10,7 @@ namespace ZKEACMS.Theme
 {
     public class ThemePackageInstaller : FilePackageInstaller
     {
-        private const string ThemePath = "~/Themes";
+        private const string ThemePath = "~/themes";
         private readonly IThemeService _themeService;
 
         public ThemePackageInstaller(IHostingEnvironment hostingEnvironment, IThemeService themeService) : base(hostingEnvironment)
@@ -25,13 +25,28 @@ namespace ZKEACMS.Theme
                 return "ThemePackageInstaller";
             }
         }
+        private string ResetPath(string path)
+        {
+            return path.Replace("~/Themes", ThemePath);
+        }
         public override object Install(Package package)
         {
+            var filePackage = package as FilePackage;
+            if (filePackage != null && filePackage.Files != null)
+            {
+                filePackage.Files.ForEach(file =>
+                {
+                    file.FilePath = ResetPath(file.FilePath);
+                });
+            }
             base.Install(package);
             var themePackage = package as ThemePackage;
             if (themePackage != null)
             {
                 var newTheme = themePackage.Theme;
+                newTheme.Url = ResetPath(newTheme.Url);
+                newTheme.UrlDebugger = ResetPath(newTheme.UrlDebugger);
+                newTheme.Thumbnail = ResetPath(newTheme.Thumbnail);
                 newTheme.IsActived = false;
                 if (_themeService.Count(m => m.ID == newTheme.ID) == 0)
                 {

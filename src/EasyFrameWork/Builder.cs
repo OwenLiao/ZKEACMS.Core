@@ -16,6 +16,8 @@ using Easy.Encrypt;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+using Easy.Logging;
 
 namespace Easy
 {
@@ -43,9 +45,7 @@ namespace Easy
             services.TryAddTransient<ILanguageService, LanguageService>();
             services.TryAddTransient<IEncryptService, EncryptService>();
             services.AddTransient<IOnModelCreating, EntityFrameWorkModelCreating>();
-            services.AddTransient<IPluginLoader, Loader>();
-
-            services.AddTransient<ILogger, Logger>();
+            services.AddTransient<IPluginLoader, Loader>();            
 
             ServiceCollection = services;
 
@@ -57,6 +57,10 @@ namespace Easy
         {
             builder.UseMiddleware<PluginStaticFileMiddleware>();
             return builder;
+        }
+        public static void UseFileLog(this ILoggerFactory loggerFactory, IHostingEnvironment env)
+        {
+            loggerFactory.AddProvider(new FileLoggerProvider(env));
         }
     }
 }
